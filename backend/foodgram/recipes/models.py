@@ -1,10 +1,12 @@
 from django.db import models
+from django.core.validators import MinValueValidator
+from foodgram.settings import RECIPES_MAX_LENGHT
 from .validators import create_hex_validator, create_slug_validator
 
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=150,
+        max_length=RECIPES_MAX_LENGHT,
         unique=True,
         blank=False
     )
@@ -15,7 +17,7 @@ class Tag(models.Model):
         validators=[create_hex_validator()]
     )
     slug = models.CharField(
-        max_length=150,
+        max_length=200,
         unique=True,
         blank=False,
         validators=[create_slug_validator()]
@@ -31,11 +33,11 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=150,
+        max_length=RECIPES_MAX_LENGHT,
         blank=False
     )
     measurement_unit = models.CharField(
-        max_length=150,
+        max_length=RECIPES_MAX_LENGHT,
         blank=False
     )
 
@@ -48,8 +50,9 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    author = models.ForeignKey()
     name = models.CharField(
-        max_length=150,
+        max_length=RECIPES_MAX_LENGHT,
         blank=False
     )
     image = models.ImageField(
@@ -57,7 +60,6 @@ class Recipe(models.Model):
         blank=False
     )
     text = models.TextField(
-        max_length=150,
         blank=False
     )
     ingredients = models.ManyToManyField(
@@ -69,8 +71,12 @@ class Recipe(models.Model):
         blank=False
     )
     cooking_time = models.PositiveIntegerField(
-        max_length=150,
-        blank=False)
+        validators=[MinValueValidator(1)],
+        blank=False
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -78,3 +84,11 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ShoppingCart(models.Model):
+    pass
+
+
+class Favorite(models.Model):
+    pass
