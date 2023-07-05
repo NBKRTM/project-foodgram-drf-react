@@ -138,7 +138,7 @@ class ShoppingCart(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'user'],
-                name='unique_follower'
+                name='unique_shopping_cart'
             )
         ]
 
@@ -152,7 +152,7 @@ class Favorite(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='users_favorites'
+        related_name='user_favorite'
     )
 
     class Meta:
@@ -161,6 +161,6 @@ class Favorite(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'user'],
-                name='unique_follower'
+                name='unique_favorite'
             )
         ]
