@@ -20,8 +20,14 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'measurement_unit']
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeIngredient(serializers.ModelSerializer):
+    class Meta:
+        model = RecipeIngredient
 
+
+class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['author', 'name', 'image']
+        fields = ['author', 'name', 'image', 'text',
+                  'ingredients', 'tags', 'cocking_time',
+                  'is_favorited', 'is_in_shopping_cart']
