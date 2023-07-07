@@ -7,6 +7,10 @@ from recipes.models import (Tag,
                             ShoppingCart,
                             Favorite)
 
+from users.models import User, Follow
+from .validators import validate_username
+# recipes app
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +46,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['author', 'name', 'image', 'text',
                   'ingredients', 'tags', 'cocking_time',
                   'is_favorited', 'is_in_shopping_cart']
+
+# users app
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'username', 'first_name', 'last_name',
+                  'is_subscribed']
+
+    def validate_username(self, username):
+        return validate_username(username)
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'username', 'first_name', 'last_name', 'password']
+
+    def validate_username(self, username):
+        return validate_username(username)
