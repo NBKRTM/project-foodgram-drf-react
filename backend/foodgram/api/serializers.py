@@ -67,3 +67,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         return validate_username(username)
+
+
+class ChangePassordSerializer(serializers.ModelsSerialiser):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['current_password', 'new_password']
