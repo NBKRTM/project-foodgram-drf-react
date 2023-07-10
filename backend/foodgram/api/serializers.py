@@ -43,7 +43,7 @@ class RecipeIngredient(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['author', 'name', 'image', 'text',
+        fields = ['id', 'author', 'name', 'image', 'text',
                   'ingredients', 'tags', 'cocking_time',
                   'is_favorited', 'is_in_shopping_cart']
 
@@ -51,6 +51,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ['id', 'email', 'username', 'first_name', 'last_name',
@@ -58,6 +60,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         return validate_username(username)
+
+    def get_is_subscribed(self, user):
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=request.user, author=user).exists()
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -69,9 +77,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return validate_username(username)
 
 
-class ChangePassordSerializer(serializers.ModelsSerialiser):
-    current_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    current_password = serializers.CharField()
+    new_password = serializers.CharField()
 
     class Meta:
         model = User

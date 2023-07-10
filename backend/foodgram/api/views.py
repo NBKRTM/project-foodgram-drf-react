@@ -1,4 +1,4 @@
-from rest_framework import permissions, filters
+from rest_framework import permissions, filters, viewsets
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from recipes.models import (Tag,
                             Ingredient,
@@ -6,10 +6,14 @@ from recipes.models import (Tag,
                             RecipeIngredient,
                             ShoppingCart,
                             Favorite)
+from users.models import User, Follow
 from .serializers import (TagSerializer,
-                          IngredientSerializer)
+                          IngredientSerializer,
+                          RecipeSerializer,
+                          UserSerializer)
 
 
+# recipes app
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -22,3 +26,17 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+
+class RecipeViewSet(ReadOnlyModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['author']
+
+
+# users app
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
