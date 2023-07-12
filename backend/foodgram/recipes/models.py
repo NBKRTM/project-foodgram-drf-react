@@ -20,6 +20,7 @@ class Tag(models.Model):
         validators=[create_hex_validator()]
     )
     slug = models.CharField(
+        'Уникальный slug',
         max_length=200,
         unique=True,
         blank=False,
@@ -68,7 +69,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'Картинка',
-        upload_to='media/recipes/',
+        upload_to='recipes/',
         blank=False
     )
     text = models.TextField(
@@ -77,8 +78,6 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='RecipeIngredient',
-        through_fields=('recipe', 'ingredient'),
         verbose_name='Список ингредиентов',
         blank=False
     )
@@ -108,18 +107,29 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
+        verbose_name='Название рецепта',
         on_delete=models.CASCADE,
-        related_name='recipe'
+        related_name='recipe_ingredient'
     )
     ingredient = models.ForeignKey(
         Ingredient,
+        verbose_name='Ингредиент',
         on_delete=models.CASCADE,
-        related_name='ingredient'
     )
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=[MinValueValidator(1)],
     )
+
+    class Meta:
+        verbose_name = 'Состав рецепта'
+        verbose_name_plural = 'Состав рецепта'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredients'
+            )
+        ]
 
 
 class ShoppingCart(models.Model):
