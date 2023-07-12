@@ -28,7 +28,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     search_fields = ['name']
 
 
-class RecipeViewSet(ReadOnlyModelViewSet):
+class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [permissions.AllowAny]
