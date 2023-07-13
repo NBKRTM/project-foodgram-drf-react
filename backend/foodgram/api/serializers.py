@@ -62,7 +62,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer()
+    ingredients = IngredientSerializer(many=True)
 
     class Meta:
         model = RecipeIngredient
