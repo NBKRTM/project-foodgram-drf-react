@@ -9,6 +9,7 @@ from recipes.models import (Tag,
 
 from users.models import User, Follow
 from .validators import validate_username
+from drf_extra_fields.fields import Base64ImageField
 # users app
 
 
@@ -79,6 +80,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         source='recipe_ingredient', many=True)
     tags = TagSerializer(many=True)
     author = UserSerializer()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -95,3 +97,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request.user.is_authenticated and ShoppingCart.objects.filter(
             recipe=obj, user=request.user).exists()
+
+
+class CreateRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ['ingredients', 'tags', 'image', 'name',
+                  'text', 'cooking_time']
