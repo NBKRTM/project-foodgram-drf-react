@@ -10,7 +10,8 @@ from users.models import User, Follow
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
-                          UserSerializer)
+                          UserSerializer,
+                          CreateRecipeSerializer)
 
 
 # recipes app

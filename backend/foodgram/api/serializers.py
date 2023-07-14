@@ -10,7 +10,9 @@ from recipes.models import (Tag,
 from users.models import User, Follow
 from .validators import validate_username
 from drf_extra_fields.fields import Base64ImageField
-# users app
+
+
+# users
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -47,24 +49,68 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['current_password', 'new_password']
-# recipes app
+
+# recipes
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source='recipe',
+        read_only=True)
+
+    name = serializers.ReadOnlyField(
+        source='recipe.name',
+        read_only=True)
+    image = serializers.ImageField(
+        source='recipe.image',
+        read_only=True)
+    cooking_time = serializers.IntegerField(
+        source='recipe.cooking_time',
+        read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'name', 'image', 'cooking_time']
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source='recipe',
+        read_only=True)
+    name = serializers.ReadOnlyField(
+        source='recipe.name',
+        read_only=True)
+    image = serializers.ImageField(
+        source='recipe.image',
+        read_only=True)
+    cooking_time = serializers.IntegerField(
+        source='recipe.cooking_time',
+        read_only=True)
+
+    class Meta:
+        model = ShoppingCart
+        fields = ['id', 'name', 'image', 'cooking_time']
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name', 'color', 'slug']
+        read_only_fields = ['id', 'name', 'color', 'slug']
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ['id', 'name', 'measurement_unit']
+        read_only_fields = ['id', 'name', 'measurement_unit']
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id')
-    name = serializers.ReadOnlyField(source='ingredient.name')
+    id = serializers.ReadOnlyField(
+        source='ingredient.id')
+    name = serializers.ReadOnlyField(
+        source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
 
@@ -73,11 +119,18 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'measurement_unit', 'amount']
 
 
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     ingredients = RecipeIngredientSerializer(
-        source='recipe_ingredient', many=True)
+        source='recipe_ingredient',
+        many=True)
     tags = TagSerializer(many=True)
     author = UserSerializer()
     image = Base64ImageField()
@@ -87,6 +140,39 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image',
                   'text', 'cooking_time']
+
+    # def create(self, validated_data):
+    #     ingredients_data = validated_data.pop('ingredients', [])
+    #     tags_data = validated_data.pop('tags', [])
+    #     recipe = Recipe.objects.create(**validated_data)
+
+    #     for ingredient_data in ingredients_data:
+    #         ingredient = Ingredient.objects.get_or_create(**ingredient_data)
+    #         RecipeIngredient.objects.create(recipe=recipe,
+    #                                         ingredient=ingredient)
+
+    #     recipe.tags.set(tags_data)
+    #     return recipe
+
+    # def update(self, instance, validated_data):
+    #     ingredients_data = validated_data.pop('ingredients', [])
+    #     tags_data = validated_data.pop('tags', [])
+
+    #     instance.name = validated_data.get('name', instance.name)
+    #     instance.text = validated_data.get('text', instance.text)
+    #     instance.cooking_time = validated_data.get('cooking_time',
+    #                                                 instance.cooking_time)
+
+    #     instance.recipe_ingredient.all().delete()
+    #     for ingredient_data in ingredients_data:
+    #         ingredient = Ingredient.objects.get_or_create(**ingredient_data)
+    #         RecipeIngredient.objects.create(recipe=instance,
+    #                                         ingredient=ingredient)
+
+    #     instance.tags.set(tags_data)
+
+    #     instance.save()
+    #     return instance
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
