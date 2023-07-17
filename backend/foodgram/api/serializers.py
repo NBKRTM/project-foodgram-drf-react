@@ -8,7 +8,7 @@ from recipes.models import (Tag,
                             Favorite)
 
 from users.models import User, Follow
-from .validators import validate_username
+from .validators import validate_new_username
 from drf_extra_fields.fields import Base64ImageField
 
 
@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_subscribed']
 
     def validate_username(self, username):
-        return validate_username(username)
+        return validate_new_username(username)
 
     def get_is_subscribed(self, user):
         request = self.context.get('request')
@@ -39,7 +39,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = ['email', 'username', 'first_name', 'last_name', 'password']
 
     def validate_username(self, username):
-        return validate_username(username)
+        return validate_new_username(username)
 
 
 class ChangePasswordSerializer(serializers.ModelSerializer):
@@ -57,7 +57,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source='recipe',
         read_only=True)
-
     name = serializers.ReadOnlyField(
         source='recipe.name',
         read_only=True)

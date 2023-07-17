@@ -6,6 +6,7 @@ from .validators import create_username_validator
 
 class User(AbstractUser):
     email = models.EmailField(
+        unique=True,
         max_length=254
     )
     username = models.CharField(
@@ -22,6 +23,13 @@ class User(AbstractUser):
     password = models.CharField(
         max_length=USERS_MAX_LENGTH
     )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'password', 'first_name', 'last_name']
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
 
 class Follow(models.Model):
