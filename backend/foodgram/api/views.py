@@ -11,6 +11,7 @@ from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeReadSerializer,
                           UserSerializer,)
+from .permissions import IsAuthorOrAdminOrReadOnly
 
 
 # recipes app
@@ -31,7 +32,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeReadSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = [filters.SearchFilter]
     search_fields = ['author']
 
