@@ -92,39 +92,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'is_in_shopping_cart', 'name', 'image',
                   'text', 'cooking_time']
 
-    # def create(self, validated_data):
-    #     ingredients_data = validated_data.pop('ingredients', [])
-    #     tags_data = validated_data.pop('tags', [])
-    #     recipe = Recipe.objects.create(**validated_data)
-
-    #     for ingredient_data in ingredients_data:
-    #         ingredient = Ingredient.objects.get_or_create(**ingredient_data)
-    #         RecipeIngredient.objects.create(recipe=recipe,
-    #                                         ingredient=ingredient)
-
-    #     recipe.tags.set(tags_data)
-    #     return recipe
-
-    # def update(self, instance, validated_data):
-    #     ingredients_data = validated_data.pop('ingredients', [])
-    #     tags_data = validated_data.pop('tags', [])
-
-    #     instance.name = validated_data.get('name', instance.name)
-    #     instance.text = validated_data.get('text', instance.text)
-    #     instance.cooking_time = validated_data.get('cooking_time',
-    #                                                 instance.cooking_time)
-
-    #     instance.recipe_ingredient.all().delete()
-    #     for ingredient_data in ingredients_data:
-    #         ingredient = Ingredient.objects.get_or_create(**ingredient_data)
-    #         RecipeIngredient.objects.create(recipe=instance,
-    #                                         ingredient=ingredient)
-
-    #     instance.tags.set(tags_data)
-
-    #     instance.save()
-    #     return instance
-
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         return request.user.is_authenticated and Favorite.objects.filter(
@@ -147,15 +114,49 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 class RecipePostUpdateSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientCreateSerializer(many=True)
-    tags = TagSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True)
     author = UserSerializer()
     image = Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'is_in_shopping_cart', 'name', 'image',
-                  'text', 'cooking_time']
+        fields = ['id', 'ingredients', 'tags', 'author',
+                  'name', 'image', 'text', 'cooking_time']
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients', [])
+        tags_data = validated_data.pop('tags', [])
+        recipe = Recipe.objects.create(**validated_data)
+
+        for ingredient_data in ingredients_data:
+            ingredient = Ingredient.objects.get_or_create(**ingredient_data)
+            RecipeIngredient.objects.create(recipe=recipe,
+                                            ingredient=ingredient)
+
+        recipe.tags.set(tags_data)
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients_data = validated_data.pop('ingredients', [])
+        tags_data = validated_data.pop('tags', [])
+
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get('cooking_time',
+                                                   instance.cooking_time)
+
+        instance.recipe_ingredient.all().delete()
+        for ingredient_data in ingredients_data:
+            ingredient = Ingredient.objects.get_or_create(**ingredient_data)
+            RecipeIngredient.objects.create(recipe=instance,
+                                            ingredient=ingredient)
+
+        instance.tags.set(tags_data)
+
+        instance.save()
+        return instance
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -194,4 +195,3 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShoppingCart
         fields = ['id', 'name', 'image', 'cooking_time']
-
