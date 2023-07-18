@@ -9,9 +9,8 @@ from recipes.models import (Tag,
 from users.models import User, Follow
 from .serializers import (TagSerializer,
                           IngredientSerializer,
-                          RecipeSerializer,
-                          UserSerializer,
-                          CreateRecipeSerializer)
+                          RecipeReadSerializer,
+                          UserSerializer,)
 
 
 # recipes app
@@ -31,14 +30,21 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeReadSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['author']
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 # users app
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+
+
+class FollowViewSet(viewsets.ModelViewSet):
+    queryset = Follow.objects.all()
