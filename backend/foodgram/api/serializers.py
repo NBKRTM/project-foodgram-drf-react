@@ -126,8 +126,8 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
                   'name', 'image', 'text', 'cooking_time']
 
     def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients', [])
-        tags_data = validated_data.pop('tags', [])
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
 
         for ingredient_data in ingredients_data:

@@ -1,5 +1,8 @@
-from rest_framework import permissions, filters, viewsets
+from django.shortcuts import get_object_or_404
+from requests import Response
+from rest_framework import permissions, filters, viewsets, status
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.decorators import action
 from recipes.models import (Tag,
                             Ingredient,
                             Recipe,
@@ -10,7 +13,9 @@ from users.models import User, Follow
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeReadSerializer,
-                          UserSerializer,)
+                          RecipePostUpdateSerializer,
+                          ShortRecipeSerializer,
+                          UserSerializer)
 from .permissions import IsAuthorOrAdminOrReadOnly
 
 
@@ -39,8 +44,46 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return RecipeReadSerializer
+        else:
+            return RecipePostUpdateSerializer
 
-# users app
+    @action(detail=True, methods=['POST', 'DELETE'])
+    def favorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        if request.method == 'POST':
+            if not request.user.is_authenticated:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if Favorite.objects.filter(
+                    user=request.user, recipe=recipe).exists():
+                return Response({"errors": 'Рецепт уже добавлен в избранное'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            Favorite.objects.create(user=request.user, recipe=recipe)
+
+            serializer = ShortRecipeSerializer(recipe, data=request.data,
+                                               context={"request": request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            if not request.user.is_authenticated:
+                return Response(
+                    {"errors": 'Вы должны быть авторизованы для удаления'},
+                    status=status.HTTP_401_UNAUTHORIZED)
+
+            try:
+                favorite = get_object_or_404(Favorite, user=request.user,
+                                             recipe=recipe)
+                favorite.delete()
+                return Response({"errors": 'Рецепт успешно удален'},
+                                status=status.HTTP_204_NO_CONTENT)
+
+            except Favorite.DoesNotExist:
+                return Response({"errors": 'Данного рецепта нет в избранном'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
