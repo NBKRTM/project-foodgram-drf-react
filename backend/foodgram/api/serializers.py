@@ -28,8 +28,6 @@ class UserGetSerializer(serializers.ModelSerializer):
 
 
 class UserPostSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
     class Meta:
         model = User
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
@@ -37,12 +35,6 @@ class UserPostSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         return validate_new_username(username)
-
-    def get_is_subscribed(self, user):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=request.user, author=user).exists()
 
 
 class ChangePasswordSerializer(serializers.ModelSerializer):

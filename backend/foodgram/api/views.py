@@ -16,14 +16,20 @@ from .serializers import (TagSerializer,
                           RecipeReadSerializer,
                           RecipePostUpdateSerializer,
                           ShortRecipeSerializer,
-                          UserGetSerializer)
+                          UserGetSerializer,
+                          UserPostSerializer)
 from .permissions import IsAuthorOrAdminOrReadOnly
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserGetSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return UserGetSerializer
+        else:
+            return UserPostSerializer
 
 
 class FollowViewSet(viewsets.ModelViewSet):
@@ -47,19 +53,18 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeReadSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = [filters.SearchFilter]
     search_fields = ['author']
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
         else:
             return RecipePostUpdateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def get_recipe_object(self, pk):
         return get_object_or_404(Recipe, pk=pk)
