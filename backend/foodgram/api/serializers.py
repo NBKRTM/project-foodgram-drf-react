@@ -12,13 +12,28 @@ from .validators import validate_new_username
 from drf_extra_fields.fields import Base64ImageField
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserGetSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed']
+
+    def get_is_subscribed(self, user):
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=request.user, author=user).exists()
+
+
+class UserPostSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['email', 'id', 'username', 'first_name', 'last_name',
+                  'password']
 
     def validate_username(self, username):
         return validate_new_username(username)
@@ -83,7 +98,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         source='recipe_ingredient',
         many=True)
     tags = TagSerializer(many=True)
-    author = UserSerializer()
+    author = UserGetSerializer()
     image = Base64ImageField()
 
     class Meta:
@@ -117,7 +132,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True)
-    author = UserSerializer()
+    author = UserGetSerializer()
     image = Base64ImageField()
 
     class Meta:

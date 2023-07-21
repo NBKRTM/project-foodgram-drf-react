@@ -16,8 +16,18 @@ from .serializers import (TagSerializer,
                           RecipeReadSerializer,
                           RecipePostUpdateSerializer,
                           ShortRecipeSerializer,
-                          UserSerializer)
+                          UserGetSerializer)
 from .permissions import IsAuthorOrAdminOrReadOnly
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserGetSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class FollowViewSet(viewsets.ModelViewSet):
+    queryset = Follow.objects.all()
 
 
 # recipes app
@@ -51,15 +61,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         else:
             return RecipePostUpdateSerializer
 
+    def get_recipe_object(self, pk):
+        return get_object_or_404(Recipe, pk=pk)
+
     @action(detail=True, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
     def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
+        recipe = self.get_recipe_object(pk)
 
         if request.method == 'POST':
             if not request.user.is_authenticated:
                 return Response(
-                    {"detail": 'Вы должны быть авторизованы для удаления'},
+                    {"detail": 'Авторизуйтесь для добавления в избранное'},
                     status=status.HTTP_401_UNAUTHORIZED)
 
             if Favorite.objects.filter(
@@ -71,12 +84,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             serializer = ShortRecipeSerializer(recipe, data=request.data,
                                                context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user, recipe=recipe)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
             if not request.user.is_authenticated:
                 return Response(
-                    {"detail": 'Вы должны быть авторизованы для удаления'},
+                    {"detail": 'Авторизуйтесь для удаления из избранного'},
                     status=status.HTTP_401_UNAUTHORIZED)
 
             try:
@@ -90,12 +106,45 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response({"errors": 'Данного рецепта нет в избранном'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['POST', 'DELETE'],
+            permission_classes=[IsAuthenticated, ])
+    def shopping_cart(self, request, pk):
+        recipe = self.get_recipe_object(pk)
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+        if request.method == 'POST':
+            if not request.user.is_authenticated:
+                return Response(
+                    {"detail": 'Авторизуйтесь для добавления в корзину'},
+                    status=status.HTTP_401_UNAUTHORIZED)
 
+            if ShoppingCart.objects.filter(
+                    user=request.user, recipe=recipe).exists():
+                return Response({"errors": 'Рецепт уже добавлен в корзину'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-class FollowViewSet(viewsets.ModelViewSet):
-    queryset = Follow.objects.all()
+            ShoppingCart.objects.create(user=request.user, recipe=recipe)
+
+            serializer = ShortRecipeSerializer(recipe, data=request.data,
+                                               context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user, recipe=recipe)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            if not request.user.is_authenticated:
+                return Response(
+                    {"detail": 'Авторизуйтесь для удаления из корзины'},
+                    status=status.HTTP_401_UNAUTHORIZED)
+
+            try:
+                shopping_cart = get_object_or_404(ShoppingCart,
+                                                  user=request.user,
+                                                  recipe=recipe)
+                shopping_cart.delete()
+                return Response({"detail": 'Рецепт успешно удален из корзины'},
+                                status=status.HTTP_204_NO_CONTENT)
+
+            except ShoppingCart.DoesNotExist:
+                return Response({"errors": 'Данного рецепта нет в корзине'},
+                                status=status.HTTP_400_BAD_REQUEST)
