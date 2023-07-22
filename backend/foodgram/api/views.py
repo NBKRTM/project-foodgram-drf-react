@@ -155,6 +155,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response({"errors": 'Данного рецепта нет в корзине'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['GET'],
+            permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request, pk):
 
         if not request.user.is_authenticated:
@@ -183,7 +185,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                  in ingredient_quantities.items()])
 
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename=shopping_cart.txt'
+        response['Content-Disposition'] = 'attachment; filename=shop_cart.txt'
         response.write(file_content)
 
         return response
