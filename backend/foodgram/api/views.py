@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from requests import Response
 from rest_framework import permissions, filters, viewsets, status
@@ -153,3 +154,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
             except ShoppingCart.DoesNotExist:
                 return Response({"errors": 'Данного рецепта нет в корзине'},
                                 status=status.HTTP_400_BAD_REQUEST)
+
+    def download_shopping_cart(self, request, pk):
+
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": 'Авторизуйтесь для скачивания списка покупок'}
+            )
+
+        shopping_cart_recipes = ShoppingCart.objects.filter(user=request.user)
+        ingredient_quantities = {}
+
+        for cart_recipe in shopping_cart_recipes:
+            recipe_ingredients = RecipeIngredient.objects.filter(
+                recipe=cart_recipe.recipe)
+            for recipe_ingredient in recipe_ingredients:
+                ingredient_name = recipe_ingredient.ingredient.name
+                ingredient_unit = recipe_ingredient.ingredient.measurement_unit
+                ingredient_amount = recipe_ingredient.amount
+
+                ingredient_key = f"{ingredient_name} ({ingredient_unit})"
+                if ingredient_key in ingredient_quantities:
+                    ingredient_quantities[ingredient_key] += ingredient_amount
+                else:
+                    ingredient_quantities[ingredient_key] = ingredient_amount
+
+        file_content = "\n".join([f"{key} — {value}" for key, value
+                                 in ingredient_quantities.items()])
+
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename=shopping_cart.txt'
+        response.write(file_content)
+
+        return response
