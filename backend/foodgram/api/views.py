@@ -32,6 +32,54 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             return UserPostSerializer
 
+    @action(detail=False, methods=['GET'],
+            permission_classes=[IsAuthenticated, ])
+    def subscriptions(self):
+        pass
+
+    @action(detail=False, methods=['POST', 'DELETE'],
+            permission_classes=[IsAuthenticated, ])
+    def subscribe(self, request, pk):
+        author = get_object_or_404(User, pk)
+
+        if request.method == 'POST':
+            if not request.user.is_authenticated:
+                return Response({"detail": 'Авторизуйтесь для подписки'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+
+            if request.user == author:
+                return Response({"detail": 'Нельзя подписаться на себя'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            follow, created = Follow.objects.get_or_create(
+                user=request.user, author=author)
+
+            if not created and request.method == 'POST':
+                return Response(
+                    {"detail": 'Вы уже подписаны на данного пользователя'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"detail": 'Подписка успешно создана'},
+                            status=status.HTTP_201_CREATED)
+
+        elif request.method == 'DELETE':
+            if not request.user.is_authenticated:
+                return Response({"detail": 'Авторизуйтесь для отписки'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+
+            try:
+                follow = Follow.objects.get(user=request.user,
+                                            author=author)
+                follow.delete()
+                return Response(
+                    {"detail": 'Вы отписались от данного пользователя'},
+                    status=status.HTTP_204_NO_CONTENT)
+
+            except Follow.DoesNotExist:
+                return Response(
+                    {"detail": 'Вы не были подписаны на данного пользователя'},
+                    status=status.HTTP_404_NOT_FOUND)
+
 
 class FollowViewSet(viewsets.ModelViewSet):
     queryset = Follow.objects.all()

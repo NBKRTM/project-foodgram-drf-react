@@ -46,7 +46,27 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         fields = ['current_password', 'new_password']
 
 
-# ----------------------------------------------------------------------recipes
+class FollowSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField()
+    username = serializers.ReadOnlyField()
+    recipes = serializers.ShortRecipeSerializer(many=True, read_only=True)
+    recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed',
+                  'recipes', 'recipes_count']
+
+    def get_is_subscribed(self, user):
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=request.user, author=user).exists()
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
 
 class TagSerializer(serializers.ModelSerializer):
