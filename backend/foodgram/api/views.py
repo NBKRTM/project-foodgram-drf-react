@@ -18,7 +18,8 @@ from .serializers import (TagSerializer,
                           RecipePostUpdateSerializer,
                           ShortRecipeSerializer,
                           UserGetSerializer,
-                          UserPostSerializer)
+                          UserPostSerializer,
+                          FollowSerializer)
 from .permissions import IsAuthorOrAdminOrReadOnly
 
 
@@ -34,8 +35,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated, ])
-    def subscriptions(self):
-        pass
+    def subscriptions(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": 'Авторизуйтесь для подписки'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        subscriptions = Follow.objects.filter(user=request.user)
+        authors = [subscription.authors for subscription in subscriptions]
+        serializer = FollowSerializer(authors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
