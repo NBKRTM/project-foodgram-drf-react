@@ -36,6 +36,15 @@ class UserPostSerializer(serializers.ModelSerializer):
     def validate_username(self, username):
         return validate_new_username(username)
 
+    def create(self, validated_data):
+        user = User(
+            email=validated_data['email'],
+            username=validated_data['username']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
 
 class ChangePasswordSerializer(serializers.ModelSerializer):
     current_password = serializers.CharField()
@@ -46,10 +55,17 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         fields = ['current_password', 'new_password']
 
 
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка покупок и избранного."""
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class FollowSerializer(serializers.ModelSerializer):
     email = serializers.ReadOnlyField()
     username = serializers.ReadOnlyField()
-    recipes = serializers.ShortRecipeSerializer(many=True, read_only=True)
+    recipes = ShortRecipeSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
 
@@ -96,14 +112,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'measurement_unit', 'amount']
 
 
-class ShortRecipeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class RecipeReadSerializer(serializers.ModelSerializer):
-    """GET список рецептов"""
+    """GET список рецептов."""
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     ingredients = RecipeIngredientSerializer(
@@ -140,6 +150,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 
 class RecipePostUpdateSerializer(serializers.ModelSerializer):
+    """POST, PATCH список рецептов."""
     ingredients = RecipeIngredientCreateSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),

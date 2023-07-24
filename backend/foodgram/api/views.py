@@ -36,18 +36,16 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated, ])
     def subscriptions(self, request):
-        if not request.user.is_authenticated:
-            return Response({"detail": 'Авторизуйтесь для подписки'},
-                            status=status.HTTP_401_UNAUTHORIZED)
-        subscriptions = Follow.objects.filter(user=request.user)
-        authors = [subscription.authors for subscription in subscriptions]
-        serializer = FollowSerializer(authors, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = User.objects.filter(following__user=request.user)
+        page = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(page, many=True,
+                                      context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
-    def subscribe(self, request, pk):
-        author = get_object_or_404(User, pk)
+    def subscribe(self, request, **kwargs):
+        author = get_object_or_404(User, id=kwargs['pk'])
 
         if request.method == 'POST':
             if not request.user.is_authenticated:
