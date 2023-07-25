@@ -116,3 +116,4 @@ USERS_MAX_LENGTH = 150
 RECIPES_MAX_LENGTH = 200
 FORBIDDEN_USERNAMES = ['me', 'set_password', 'subscriptions', 'subscribe',
                        'shopping_cart', 'favorite']
+FILENAME = 'shopping_cart.txt'

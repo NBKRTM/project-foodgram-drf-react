@@ -1,26 +1,21 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from requests import Response
-from rest_framework import permissions, filters, viewsets, status
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from recipes.models import (Tag,
-                            Ingredient,
-                            Recipe,
-                            RecipeIngredient,
-                            ShoppingCart,
-                            Favorite)
-from users.models import User, Follow
-from .serializers import (TagSerializer,
-                          IngredientSerializer,
-                          RecipeReadSerializer,
-                          RecipePostUpdateSerializer,
-                          ShortRecipeSerializer,
-                          UserGetSerializer,
-                          UserPostSerializer,
-                          FollowSerializer)
+from rest_framework.viewsets import ReadOnlyModelViewSet
+
+from foodgram.settings import FILENAME
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
+from users.models import Follow, User
+
 from .permissions import IsAuthorOrAdminOrReadOnly
+from .serializers import (FollowSerializer, IngredientSerializer,
+                          RecipePostUpdateSerializer, RecipeReadSerializer,
+                          ShortRecipeSerializer, TagSerializer,
+                          UserGetSerializer, UserPostSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -120,30 +115,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def get_recipe_object(self, pk):
-        return get_object_or_404(Recipe, pk=pk)
-
     @action(detail=True, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
-    def favorite(self, request, pk):
-        recipe = self.get_recipe_object(pk)
+    def favorite(self, request, **kwargs):
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
 
         if request.method == 'POST':
+            serializer = ShortRecipeSerializer(recipe, data=request.data,
+                                               context={"request": request})
+            serializer.is_valid(raise_exception=True)
             if not request.user.is_authenticated:
                 return Response(
-                    {"detail": 'Авторизуйтесь для добавления в избранное'},
+                    {"detail": 'Авторизуйтесь для добавления в избранное.'},
                     status=status.HTTP_401_UNAUTHORIZED)
 
             if Favorite.objects.filter(
                     user=request.user, recipe=recipe).exists():
-                return Response({"errors": 'Рецепт уже добавлен в избранное'},
+                return Response({"errors": 'Рецепт уже добавлен в избранное.'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             Favorite.objects.create(user=request.user, recipe=recipe)
 
-            serializer = ShortRecipeSerializer(recipe, data=request.data,
-                                               context={"request": request})
-            serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user, recipe=recipe)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -151,14 +143,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'DELETE':
             if not request.user.is_authenticated:
                 return Response(
-                    {"detail": 'Авторизуйтесь для удаления из избранного'},
+                    {"detail": 'Авторизуйтесь для удаления из избранного.'},
                     status=status.HTTP_401_UNAUTHORIZED)
 
             try:
-                favorite = get_object_or_404(Favorite, user=request.user,
+                favorite = get_object_or_404(Favorite,
+                                             user=request.user,
                                              recipe=recipe)
                 favorite.delete()
-                return Response({"detail": 'Рецепт успешно удален'},
+                return Response({"detail": 'Рецепт удален из избранного.'},
                                 status=status.HTTP_204_NO_CONTENT)
 
             except Favorite.DoesNotExist:
@@ -167,10 +160,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
-    def shopping_cart(self, request, pk):
-        recipe = self.get_recipe_object(pk)
+    def shopping_cart(self, request, **kwargs):
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
 
         if request.method == 'POST':
+            serializer = ShortRecipeSerializer(recipe, data=request.data,
+                                               context={"request": request})
+            serializer.is_valid(raise_exception=True)
             if not request.user.is_authenticated:
                 return Response(
                     {"detail": 'Авторизуйтесь для добавления в корзину'},
@@ -183,9 +179,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             ShoppingCart.objects.create(user=request.user, recipe=recipe)
 
-            serializer = ShortRecipeSerializer(recipe, data=request.data,
-                                               context={"request": request})
-            serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user, recipe=recipe)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -238,7 +231,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                  in ingredient_quantities.items()])
 
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename=shop_cart.txt'
+        response['Content-Disposition'] = f'attachment; filename={FILENAME}'
         response.write(file_content)
 
         return response
