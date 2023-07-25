@@ -7,8 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from foodgram.settings import FILENAME
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (Favorite,
+                            Ingredient,
+                            Recipe,
+                            RecipeIngredient,
+                            ShoppingCart,
+                            Tag)
 from users.models import Follow, User
 
 from .permissions import IsAuthorOrAdminOrReadOnly
@@ -85,7 +89,6 @@ class FollowViewSet(viewsets.ModelViewSet):
     queryset = Follow.objects.all()
 
 
-# recipes app
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer

@@ -1,8 +1,12 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (Favorite,
+                            Ingredient,
+                            Recipe,
+                            RecipeIngredient,
+                            ShoppingCart,
+                            Tag)
 from users.models import Follow, User
 
 from .validators import validate_new_username
@@ -52,7 +56,7 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для списка покупок и избранного."""
+    """Сериализатор рецептов для списка покупок и избранного."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -137,7 +141,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
-    """Ингредиент и количество для создания рецепта."""
     id = serializers.IntegerField()
 
     class Meta:
@@ -146,7 +149,6 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 
 class RecipePostUpdateSerializer(serializers.ModelSerializer):
-    """POST, PATCH список рецептов."""
     ingredients = RecipeIngredientCreateSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
