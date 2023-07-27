@@ -8,8 +8,14 @@ from recipes.models import (Favorite,
                             ShoppingCart,
                             Tag)
 from users.models import Follow, User
-
 from .validators import validate_new_username
+
+
+def get_subscribed(self, user):
+    request = self.context.get('request')
+    if request is None or request.user.is_anonymous:
+        return False
+    return Follow.objects.filter(user=request.user, author=user).exists()
 
 
 class UserGetSerializer(serializers.ModelSerializer):
@@ -21,10 +27,7 @@ class UserGetSerializer(serializers.ModelSerializer):
                   'is_subscribed']
 
     def get_is_subscribed(self, user):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=request.user, author=user).exists()
+        return get_subscribed(user)
 
 
 class UserPostSerializer(serializers.ModelSerializer):
@@ -76,10 +79,7 @@ class FollowSerializer(serializers.ModelSerializer):
                   'recipes', 'recipes_count']
 
     def get_is_subscribed(self, user):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=request.user, author=user).exists()
+        return get_subscribed(user)
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()

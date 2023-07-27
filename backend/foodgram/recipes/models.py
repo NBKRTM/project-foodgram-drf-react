@@ -3,7 +3,6 @@ from django.db import models
 
 from foodgram.settings import RECIPES_MAX_LENGTH
 from users.models import User
-
 from .validators import create_hex_validator, create_slug_validator
 
 

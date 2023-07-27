@@ -2,7 +2,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from foodgram.settings import USERS_MAX_LENGTH
-
 from .validators import create_username_validator
 
 
