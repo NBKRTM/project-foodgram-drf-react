@@ -18,6 +18,17 @@ def get_subscribed(self, user):
     return Follow.objects.filter(user=request.user, author=user).exists()
 
 
+def create_recipe_ingredient(recipe, ingredients_data):
+    recipe_ingredients = [
+        RecipeIngredient(
+            recipe=recipe,
+            ingredient=Ingredient.objects.get(**ingredients_data)
+        )
+        for ingredient_data in ingredients_data
+    ]
+    RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
+
 class UserGetSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
@@ -161,15 +172,18 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'ingredients', 'tags', 'author',
                   'name', 'image', 'text', 'cooking_time']
 
+    def validate_ingredients(self, value):
+        ingredient_names = [item['name'] for item in value]
+        if len(ingredient_names) != len(set(ingredient_names)):
+            raise serializers.ValidationError('Дублирование ингредиентов!')
+        return value
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
 
-        for ingredient_data in ingredients_data:
-            ingredient = Ingredient.objects.get_or_create(**ingredient_data)
-            RecipeIngredient.objects.create(recipe=recipe,
-                                            ingredient=ingredient)
+        create_recipe_ingredient(recipe, ingredients_data)
 
         recipe.tags.set(tags_data)
         return recipe
@@ -178,17 +192,11 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients', [])
         tags_data = validated_data.pop('tags', [])
 
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time',
-                                                   instance.cooking_time)
+        instance = super().update(instance, validated_data)
 
         instance.recipe_ingredient.all().delete()
-        for ingredient_data in ingredients_data:
-            ingredient = Ingredient.objects.get_or_create(**ingredient_data)
-            RecipeIngredient.objects.create(recipe=instance,
-                                            ingredient=ingredient)
+
+        create_recipe_ingredient(instance, ingredients_data)
 
         instance.tags.set(tags_data)
 
