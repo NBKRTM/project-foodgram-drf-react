@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.db.models import Sum
 from requests import Response
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -152,19 +153,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request, pk):
         shopping_cart_recipes = ShoppingCart.objects.filter(user=request.user)
 
-        ingredient_quantities = {}
-        recipe_ingr = RecipeIngredient.objects.filter(
-            recipe__in=shopping_cart_recipes).values_list(
-            'ingredient__name', 'ingredient__measurement_unit', 'amount'
+        ingredient_quantities = RecipeIngredient.objects.filter(
+            recipe__in=shopping_cart_recipes
+        ).values('ingredient__name', 'ingredient__measurement_unit').annotate(
+            total_amount=Sum('amount')
         )
 
-        for ingredient_name, ingredient_unit, ingredient_amount in recipe_ingr:
-            ingredient_key = f"{ingredient_name} ({ingredient_unit})"
-            ingredient_quantities[ingredient_key] = ingredient_quantities.get(
-                ingredient_key, 0) + ingredient_amount
-
-        file_content = "\n".join([f"{key} — {value}" for key, value 
-                                  in ingredient_quantities.items()])
+        file_content = "\n".join(
+            [f"{item['ingredient__name']}"
+             f"({item['ingredient__measurement_unit']})"
+             f"— {item['total_amount']}" for item in ingredient_quantities]
+        )
 
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={FILENAME}'
