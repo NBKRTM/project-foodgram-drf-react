@@ -150,26 +150,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request, pk):
-
         shopping_cart_recipes = ShoppingCart.objects.filter(user=request.user)
+
         ingredient_quantities = {}
+        recipe_ingr = RecipeIngredient.objects.filter(
+            recipe__in=shopping_cart_recipes).values_list(
+            'ingredient__name', 'ingredient__measurement_unit', 'amount'
+        )
 
-        for cart_recipe in shopping_cart_recipes:
-            recipe_ingredients = RecipeIngredient.objects.filter(
-                recipe=cart_recipe.recipe)
-            for recipe_ingredient in recipe_ingredients:
-                ingredient_name = recipe_ingredient.ingredient.name
-                ingredient_unit = recipe_ingredient.ingredient.measurement_unit
-                ingredient_amount = recipe_ingredient.amount
+        for ingredient_name, ingredient_unit, ingredient_amount in recipe_ingr:
+            ingredient_key = f"{ingredient_name} ({ingredient_unit})"
+            ingredient_quantities[ingredient_key] = ingredient_quantities.get(
+                ingredient_key, 0) + ingredient_amount
 
-                ingredient_key = f"{ingredient_name} ({ingredient_unit})"
-                if ingredient_key in ingredient_quantities:
-                    ingredient_quantities[ingredient_key] += ingredient_amount
-                else:
-                    ingredient_quantities[ingredient_key] = ingredient_amount
-
-        file_content = "\n".join([f"{key} — {value}" for key, value
-                                 in ingredient_quantities.items()])
+        file_content = "\n".join([f"{key} — {value}" for key, value 
+                                  in ingredient_quantities.items()])
 
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={FILENAME}'
