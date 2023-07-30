@@ -54,7 +54,7 @@ class UserViewSet(viewsets.ModelViewSet):
             _, created = Follow.objects.get_or_create(
                 user=request.user, author=author)
 
-            if not created and request.method == 'POST':
+            if not created:
                 return Response(
                     {"detail": 'Вы уже подписаны на данного пользователя'},
                     status=status.HTTP_400_BAD_REQUEST)
@@ -121,8 +121,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create_or_delete_object(self, request, recipe, model_class):
         serializer = self.shortrecipe_get_serializer(recipe, request)
 
-        if model_class.objects.filter(user=request.user,
-                                      recipe=recipe).exists():
+        if not model_class.objects.filter(user=request.user,
+                                          recipe=recipe).exists():
             model_class.objects.create(user=request.user, recipe=recipe)
             serializer.save(user=request.user, recipe=recipe)
             status_code = status.HTTP_201_CREATED

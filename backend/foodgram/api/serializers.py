@@ -1,32 +1,15 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
+from api.utils import get_subscribed, create_recipe_ingredient
 from recipes.models import (Favorite,
                             Ingredient,
                             Recipe,
                             RecipeIngredient,
                             ShoppingCart,
                             Tag)
-from users.models import Follow, User
+from users.models import User
 from .validators import validate_new_username
-
-
-def get_subscribed(self, user):
-    request = self.context.get('request')
-    if request is None or request.user.is_anonymous:
-        return False
-    return Follow.objects.filter(user=request.user, author=user).exists()
-
-
-def create_recipe_ingredient(recipe, ingredients_data):
-    recipe_ingredients = [
-        RecipeIngredient(
-            recipe=recipe,
-            ingredient=Ingredient.objects.get(**ingredients_data)
-        )
-        for ingredient_data in ingredients_data
-    ]
-    RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
 
 class UserGetSerializer(serializers.ModelSerializer):
@@ -198,7 +181,6 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
 
         instance.tags.set(tags_data)
 
-        instance.save()
         return instance
 
 
