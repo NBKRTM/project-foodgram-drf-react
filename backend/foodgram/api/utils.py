@@ -13,7 +13,8 @@ def create_recipe_ingredient(recipe, ingredients_data):
     recipe_ingredients = [
         RecipeIngredient(
             recipe=recipe,
-            ingredient_id=ingredients_data['pk']
+            ingredient_id=ingredient_data['pk'],
+            amount=ingredient_data['amount']
         )
         for ingredient_data in ingredients_data
     ]
