@@ -17,6 +17,6 @@ Foodgram
 - Соберите статику docker-compose exec backend python manage.py collectstatic --no-input.
 Документация к API находится по адресу: http://localhost/api/docs/redoc.html.
 
-Автор
+Автор:
 
 Небыков Артем https://github.com/NBKRTM
