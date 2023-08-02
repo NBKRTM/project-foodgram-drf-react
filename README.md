@@ -18,4 +18,5 @@ Foodgram
 Документация к API находится по адресу: http://localhost/api/docs/redoc.html.
 
 Автор
+
 Небыков Артем https://github.com/NBKRTM
