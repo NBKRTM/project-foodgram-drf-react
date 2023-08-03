@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from foodgram.settings import FILENAME
+from foodgram.settings import ава
 from recipes.models import (Favorite,
                             Ingredient,
                             Recipe,
@@ -166,7 +166,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={FILENAME}'
+        response['Content-Disposition'] = f'attachment; filename={ава}'
         response.write(file_content)
 
         return response
