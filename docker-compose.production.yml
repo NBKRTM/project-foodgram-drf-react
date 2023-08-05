@@ -34,7 +34,7 @@ services:
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static_volume_production:/var/html/static/
-      - media_production:/media
+      - media_production:/var/html/media
     depends_on:
       - frontend
     restart: always
