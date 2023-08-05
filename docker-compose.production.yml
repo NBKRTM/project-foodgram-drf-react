@@ -17,7 +17,7 @@ services:
     env_file: .env
     volumes:
     - static_volume_production:/backend_static
-    - media_production:app/media/recipes/images/
+    - media_production:app/media/
     depends_on:
     - db
 
@@ -28,12 +28,13 @@ services:
       - static_volume_production:/frontend_static
 
   gateway:
-    image: nginx:1.19.3
+    image: nbkrtm/foodgram_gateway
     ports:
       - 8000:80
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static_volume_production:/var/html/static/
-      - media_production:/var/html/media/
+      - media_production:/media
     depends_on:
-      - backend
+      - frontend
+    restart: always
