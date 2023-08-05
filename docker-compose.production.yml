@@ -33,8 +33,8 @@ services:
       - 8000:80
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
-      - static_volume_production:/var/html/static/
-      - media_production:/var/html/media
+      - static_volume_production:/static/
+      - media_production:/media/
     depends_on:
-      - frontend
+      - backend
     restart: always
