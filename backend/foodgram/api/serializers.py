@@ -22,7 +22,7 @@ class UserGetSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return get_subscribed(self, obj, request)
+        return get_subscribed(obj, request)
 
 
 class UserPostSerializer(serializers.ModelSerializer):
@@ -74,7 +74,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return get_subscribed(self, obj, request)
+        return get_subscribed(obj, request)
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
