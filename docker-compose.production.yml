@@ -4,37 +4,35 @@ volumes:
   pg_data_production:
   static_volume_production:
   media_production:
-
 services:
   db:
     image: postgres:13.10
     env_file: .env
     volumes:
       - pg_data_production:/var/lib/postgresql/data
-
   backend:
     image: nbkrtm/foodgram_backend
     env_file: .env
-    volumes:
-    - static_volume_production:/backend_static
-    - media_production:app/media/recipes/images/
     depends_on:
-    - db
-
+      - db
+    volumes:
+      - static_volume_production:/backend_static
+      - media_production:/app/media/
   frontend:
     image: nbkrtm/foodgram_frontend
+    # env_file: .env
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static_volume_production:/frontend_static
-
-  nginx:
+  gateway:
     image: nbkrtm/foodgram_gateway
-    ports:
-      - 8000:80
+    # env_file: .env
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static_volume_production:/static/
-      - media_production:/media/recipes/images/
+      - media_production:/media
+    ports:
+      - 8000:80
     depends_on:
-      - backend
+      - frontend
     restart: always
