@@ -4,7 +4,7 @@ from django.db.models import Sum
 from requests import Response
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from foodgram.settings import FILENAME
@@ -24,7 +24,7 @@ from .serializers import (FollowSerializer, IngredientSerializer,
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = (AllowAny, )
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
