@@ -21,7 +21,8 @@ class UserGetSerializer(serializers.ModelSerializer):
                   'is_subscribed']
 
     def get_is_subscribed(self, obj):
-        return get_subscribed(self, obj)
+        request = self.context.get('request')
+        return get_subscribed(self, obj, request)
 
 
 class UserPostSerializer(serializers.ModelSerializer):
