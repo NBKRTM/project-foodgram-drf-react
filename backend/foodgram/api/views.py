@@ -32,6 +32,14 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             return UserPostSerializer
 
+    @action(detail=False, methods=['get'],
+            pagination_class=None,
+            permission_classes=(IsAuthenticated,))
+    def me(self, request):
+        serializer = UserGetSerializer(request.user)
+        return Response(serializer.data,
+                        status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated, ])
     def subscriptions(self, request):
