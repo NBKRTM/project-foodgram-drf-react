@@ -2,11 +2,11 @@ from users.models import Follow
 from recipes.models import RecipeIngredient
 
 
-def get_subscribed(self, user):
-    request = self.context.get('request')
+def get_subscribed(self, obj):
+    request = self.context.get('request').user.id
     if request is None or request.user.is_anonymous:
         return False
-    return Follow.objects.filter(user=request.user, author=user).exists()
+    return Follow.objects.filter(user=request, author=obj.id).exists()
 
 
 def create_recipe_ingredient(recipe, ingredients_data):

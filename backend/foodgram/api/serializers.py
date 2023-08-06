@@ -20,8 +20,8 @@ class UserGetSerializer(serializers.ModelSerializer):
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed']
 
-    def get_is_subscribed(self, user):
-        return get_subscribed(self, user)
+    def get_is_subscribed(self, obj):
+        return get_subscribed(self, obj)
 
 
 class UserPostSerializer(serializers.ModelSerializer):
