@@ -138,12 +138,24 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(source='ingredient.id')
     amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount')
+
+    def validate(self, data):
+        request = self.context.get('request')
+        recipe_id = request.GET.get('recipe')
+        ingredient_id = data['ingredient']['id']
+        existing_ingredients = RecipeIngredient.objects.filter(
+            recipe_id=recipe_id,
+            ingredient_id=ingredient_id
+        )
+        if existing_ingredients.exists():
+            raise ValidationError('Ингредиент уже добавлен в рецепт')
+        return data
 
 
 class RecipePostUpdateSerializer(serializers.ModelSerializer):
