@@ -180,7 +180,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нужно указать минимум один ингредиент.'
             )
-        ingredient_names = [item['name'] for item in obj]
+        ingredient_names = [item['id'] for item in obj.get('ingredients')]
         if len(ingredient_names) != len(set(ingredient_names)):
             raise serializers.ValidationError('Дублирование ингредиентов!')
         return obj
