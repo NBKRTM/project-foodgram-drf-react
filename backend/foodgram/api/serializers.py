@@ -1,5 +1,6 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from djoser.serializers import UserSerializer, UserCreateSerializer
 
 from api.utils import get_subscribed, create_recipe_ingredient
 from recipes.models import (Favorite,
@@ -12,7 +13,7 @@ from users.models import User
 from .validators import validate_new_username
 
 
-class UserGetSerializer(serializers.ModelSerializer):
+class UserGetSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -25,7 +26,7 @@ class UserGetSerializer(serializers.ModelSerializer):
         return get_subscribed(obj, request)
 
 
-class UserPostSerializer(serializers.ModelSerializer):
+class UserPostSerializer(UserCreateSerializer):
     class Meta:
         model = User
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
@@ -155,11 +156,11 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'ingredients', 'tags', 'author',
                   'name', 'image', 'text', 'cooking_time']
 
-    def validate_ingredients(self, value):
-        ingredient_names = [item['name'] for item in value]
+    def validate_ingredients(self, obj):
+        ingredient_names = [item['name'] for item in obj.get('ingredients')]
         if len(ingredient_names) != len(set(ingredient_names)):
             raise serializers.ValidationError('Дублирование ингредиентов!')
-        return value
+        return obj
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
