@@ -1,7 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum
-from rest_framework import filters, permissions, status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -20,6 +21,7 @@ from .serializers import (FollowSerializer, IngredientSerializer,
                           RecipePostUpdateSerializer, RecipeReadSerializer,
                           ShortRecipeSerializer, TagSerializer,
                           UserGetSerializer, UserPostSerializer)
+from .filters import IngredientFilter, RecipeFilter
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -91,21 +93,24 @@ class FollowViewSet(viewsets.ModelViewSet):
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = (AllowAny,)
+    pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [permissions.AllowAny]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    permission_classes = (AllowAny,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
-    filter_backends = [filters.SearchFilter]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     search_fields = ['author']
 
     def get_serializer_class(self):
