@@ -150,7 +150,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True)
-    author = UserGetSerializer()
+    author = UserGetSerializer(read_only=True)
     image = Base64ImageField()
 
     class Meta:
