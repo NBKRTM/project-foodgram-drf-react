@@ -158,31 +158,22 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'ingredients', 'tags', 'author',
                   'name', 'image', 'text', 'cooking_time']
 
-    def validate(self, data):
-        ingredients_list = []
-        ingredients_data = data.get('ingredients')
-        cooking_time = data.get('cooking_time')
-        tags = data.get('tags')
-        for ingredient in data.get('ingredients'):
-            if ingredient.get('amount') <= 0:
-                raise ValidationError(
-                    'Количество ингредиента не может быть меньше 1'
-                )
-            ingredients_list.append(ingredient.get('ingredient')['id'])
-        if len(set(ingredients_list)) != len(ingredients_list):
-            raise ValidationError(
-                'В рецепт нельзя добавить одинаковые ингредиенты!'
-                'Следует увеличить количество текущего ингредиента!'
+    def validate(self, obj):
+        if not obj.get('tags'):
+            raise serializers.ValidationError(
+                'Нужно указать минимум один тег.'
             )
-        if not ingredients_data or len(ingredients_data) < 1:
-            raise ValidationError(
-                "Рецепт должен содержать хотя бы один ингредиент.")
-        if cooking_time <= 0:
-            raise ValidationError(
-                'Время приготовления должно быть больше 0.')
-        if not tags:
-            raise ValidationError('Необходимо указать теги.')
-        return data
+        if not obj.get('ingredients'):
+            raise serializers.ValidationError(
+                'Нужно указать минимум один ингредиент.'
+            )
+        inrgedient_id_list = [item['id'] for item in obj.get('ingredients')]
+        unique_ingredient_id_list = set(inrgedient_id_list)
+        if len(inrgedient_id_list) != len(unique_ingredient_id_list):
+            raise serializers.ValidationError(
+                'Ингредиенты должны быть уникальны.'
+            )
+        return obj
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
