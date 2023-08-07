@@ -164,7 +164,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True)
     author = UserGetSerializer(read_only=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = Recipe
@@ -180,12 +180,9 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нужно указать минимум один ингредиент.'
             )
-        inrgedient_id_list = [item['id'] for item in obj.get('ingredients')]
-        unique_ingredient_id_list = set(inrgedient_id_list)
-        if len(inrgedient_id_list) != len(unique_ingredient_id_list):
-            raise serializers.ValidationError(
-                'Ингредиенты должны быть уникальны.'
-            )
+        ingredient_names = [item['name'] for item in obj]
+        if len(ingredient_names) != len(set(ingredient_names)):
+            raise serializers.ValidationError('Дублирование ингредиентов!')
         return obj
 
     def create(self, validated_data):
