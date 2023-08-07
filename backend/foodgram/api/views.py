@@ -20,7 +20,9 @@ from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (FollowSerializer, IngredientSerializer,
                           RecipePostUpdateSerializer, RecipeReadSerializer,
                           ShortRecipeSerializer, TagSerializer,
-                          UserGetSerializer, UserPostSerializer)
+                          UserGetSerializer, UserPostSerializer,
+                          ChangePasswordSerializer,
+                          FavoriteSerializer, ShoppingCartSerializer)
 from .filters import IngredientFilter, RecipeFilter
 
 
@@ -31,6 +33,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return UserGetSerializer
+        elif self.action == 'favorite':
+            return FavoriteSerializer
+        elif self.action == 'shopping_cart':
+            return ShoppingCartSerializer
         else:
             return UserPostSerializer
 
@@ -41,6 +47,15 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserGetSerializer(request.user)
         return Response(serializer.data,
                         status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'],
+            permission_classes=(IsAuthenticated,))
+    def set_password(self, request):
+        serializer = ChangePasswordSerializer(request.user, data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({'detail': 'Пароль успешно изменен!'},
+                        status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated, ])
@@ -111,14 +126,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    search_fields = ['author']
+    http_method_names = ['get', 'post', 'patch', 'create', 'delete']
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
+        elif self.action == 'favorite':
+            return FavoriteSerializer
+        elif self.action == 'shopping_cart':
+            return ShoppingCartSerializer
         return RecipePostUpdateSerializer
 
     def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
         serializer.save(author=self.request.user)
 
     def shortrecipe_get_serializer(self, recipe, request):
