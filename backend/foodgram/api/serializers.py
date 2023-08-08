@@ -223,7 +223,7 @@ class FavoriteSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        recipe = get_object_or_404(Recipe, pk=validated_data['id'])
+        recipe = get_object_or_404(Recipe, id=validated_data['id'])
         user = self.context['request'].user
         Favorite.objects.create(user=user, recipe=recipe)
         serializer = ShortRecipeSerializer(recipe)

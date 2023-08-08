@@ -150,7 +150,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return serializer
 
     def recipe_get(self, recipe, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        recipe = get_object_or_404(Recipe, id=kwargs['id'])
         return recipe
 
     def create_or_delete_object(self, request, recipe, model_class):
