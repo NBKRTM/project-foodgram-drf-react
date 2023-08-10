@@ -17,13 +17,13 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         max_length=USERS_MAX_LENGTH,
-        blank=True,
-        null=True
+        # blank=True,
+        # null=True
     )
     last_name = models.CharField(
         max_length=USERS_MAX_LENGTH,
-        blank=True,
-        null=True
+        # blank=True,
+        # null=True
     )
     password = models.CharField(
         max_length=USERS_MAX_LENGTH
