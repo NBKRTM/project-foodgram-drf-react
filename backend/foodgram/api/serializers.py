@@ -28,7 +28,7 @@ class UserGetSerializer(UserSerializer):
         return get_subscribed(obj, request)
 
 
-class UserPostSerializer(UserSerializer):
+class UserPostSerializer(UserCreateSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True
