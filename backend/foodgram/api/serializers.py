@@ -55,8 +55,26 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         model = User
         fields = ['current_password', 'new_password']
 
+    def update(self, instance, validated_data):
+        if not instance.check_password(validated_data['current_password']):
+            raise serializers.ValidationError(
+                {'current_password': 'Неправильный пароль.'}
+            )
+        if (validated_data['current_password']
+           == validated_data['new_password']):
+            raise serializers.ValidationError(
+                {'new_password': 'Новый пароль должен отличаться от текущего.'}
+            )
+        instance.set_password(validated_data['new_password'])
+        instance.save()
+        return validated_data
+
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(read_only=True)
+    name = serializers.ReadOnlyField()
+    cooking_time = serializers.ReadOnlyField()
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -92,7 +110,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Ingredient
+        model = Ingredient()
         fields = ['id', 'name', 'measurement_unit']
         read_only_fields = ['id', 'name', 'measurement_unit']
 
@@ -109,16 +127,24 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'name', 'measurement_unit', 'amount']
 
+    def validate_amount(self, value):
+        if value <= 0:
+            raise ValidationError(
+                'Количество ингредиента должно быть больше 0'
+            )
+        return value
+
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     ingredients = RecipeIngredientSerializer(
-        source='recipe_ingredient',
-        many=True)
-    tags = TagSerializer(many=True)
-    author = UserGetSerializer()
-    image = Base64ImageField()
+        source='ingredient_recipe',
+        many=True,
+        read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
+    author = UserGetSerializer(read_only=True)
+    image = Base64ImageField(required=True, allow_null=True)
 
     class Meta:
         model = Recipe
@@ -171,43 +197,52 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'ingredients', 'tags', 'author',
                   'name', 'image', 'text', 'cooking_time']
 
-    def validate(self, obj):
-        if not obj.get('tags'):
-            raise serializers.ValidationError(
-                'Нужно указать минимум один тег.'
+    def validate(self, data):
+        ingredients_list = []
+        ingredients_data = data.get('ingredients')
+        cooking_time = data.get('cooking_time')
+        tags = data.get('tags')
+        for ingredient in data.get('ingredients'):
+            if ingredient.get('amount') <= 0:
+                raise ValidationError(
+                    'Количество ингредиента не может быть меньше 1'
+                )
+            ingredients_list.append(ingredient.get('ingredient')['id'])
+        if len(set(ingredients_list)) != len(ingredients_list):
+            raise ValidationError(
+                'В рецепт нельзя добавить одинаковые ингредиенты!'
+                'Следует увеличить количество текущего ингредиента!'
             )
-        if not obj.get('ingredients'):
-            raise serializers.ValidationError(
-                'Нужно указать минимум один ингредиент.'
-            )
-        ingredient_names = [item['id'] for item in obj.get('ingredients')]
-        if len(ingredient_names) != len(set(ingredient_names)):
-            raise serializers.ValidationError('Дублирование ингредиентов!')
-        return obj
+        if not ingredients_data or len(ingredients_data) < 1:
+            raise ValidationError(
+                "Рецепт должен содержать хотя бы один ингредиент.")
+        if cooking_time <= 0:
+            raise ValidationError(
+                'Время приготовления должно быть больше 0.')
+        if not tags:
+            raise ValidationError('Необходимо указать теги.')
+        return data
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-
         create_recipe_ingredient(recipe, ingredients_data)
-
         recipe.tags.set(tags_data)
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients_data = validated_data.pop('ingredients', [])
-        tags_data = validated_data.pop('tags', [])
-
-        instance = super().update(instance, validated_data)
-
-        instance.recipe_ingredient.all().delete()
-
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        RecipeIngredient.objects.filter(recipe=instance).delete
         create_recipe_ingredient(instance, ingredients_data)
-
         instance.tags.set(tags_data)
 
-        return instance
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(instance,
+                                    context=self.context).data
 
 
 class FavoriteSerializer(serializers.Serializer):

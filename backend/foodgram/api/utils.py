@@ -1,5 +1,7 @@
+from django.db.models import F
+
 from users.models import Follow
-from recipes.models import RecipeIngredient
+from recipes.models import RecipeIngredient, Ingredient
 
 
 def get_subscribed(obj, request):
@@ -10,12 +12,19 @@ def get_subscribed(obj, request):
 
 
 def create_recipe_ingredient(recipe, ingredients_data):
-    recipe_ingredients = [
-        RecipeIngredient(
-            recipe=recipe,
-            ingredient_id=ingredient_data['id'],
-            amount=ingredient_data['amount']
-        )
-        for ingredient_data in ingredients_data
-    ]
-    RecipeIngredient.objects.bulk_create(recipe_ingredients)
+    ingredients = []
+    for ingredient_data in ingredients_data:
+        ingredient_id = ingredient_data['ingredient']['id']
+        amount = ingredient_data['amount']
+        ingredient = Ingredient.objects.get(id=ingredient_id)
+        existing_recipe_ingredient = RecipeIngredient.objects.filter(
+                recipe=recipe,
+                ingredient=ingredient_id)
+        if existing_recipe_ingredient.exists():
+            existing_recipe_ingredient.update(amount=F('amount') + amount)
+        else:
+            recipe_ingredient = RecipeIngredient(
+                recipe=recipe, ingredient=ingredient, amount=amount
+            )
+            ingredients.append(recipe_ingredient)
+    RecipeIngredient.objects.bulk_create(ingredients)

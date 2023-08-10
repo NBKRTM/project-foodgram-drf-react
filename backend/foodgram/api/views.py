@@ -51,7 +51,8 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
     def set_password(self, request):
-        serializer = ChangePasswordSerializer(request.user, data=request.data)
+        serializer = ChangePasswordSerializer(
+            request.user, data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({'detail': 'Пароль успешно изменен!'},
@@ -66,12 +67,15 @@ class UserViewSet(viewsets.ModelViewSet):
                                       context={'request': request})
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=False, methods=['POST', 'DELETE'],
+    @action(detail=True, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated, ])
     def subscribe(self, request, **kwargs):
         author = get_object_or_404(User, id=kwargs['pk'])
 
         if request.method == 'POST':
+            serializer = FollowSerializer(
+                author, data=request.data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
             if request.user == author:
                 return Response({"detail": 'Нельзя подписаться на себя'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -150,7 +154,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return serializer
 
     def recipe_get(self, recipe, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs['id'])
+        recipe = get_object_or_404(Recipe, pk=kwargs['pk'])
         return recipe
 
     def create_or_delete_object(self, request, recipe, model_class):
@@ -185,18 +189,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['GET'],
             permission_classes=(IsAuthenticated,))
-    def download_shopping_cart(self, request, pk):
+    def download_shopping_cart(self, request):
         shopping_cart_recipes = ShoppingCart.objects.filter(user=request.user)
+        recipe_ids = shopping_cart_recipes.values_list('recipe_id', flat=True)
 
         ingredient_quantities = RecipeIngredient.objects.filter(
-            recipe__in=shopping_cart_recipes
+            recipe__id__in=recipe_ids
         ).values('ingredient__name', 'ingredient__measurement_unit').annotate(
             total_amount=Sum('amount')
         )
 
         file_content = "\n".join(
-            [f"{item['ingredient__name']}"
-             f"({item['ingredient__measurement_unit']})"
+            [f"{item['ingredient__name']} "
+             f"({item['ingredient__measurement_unit']}) "
              f"— {item['total_amount']}" for item in ingredient_quantities]
         )
 

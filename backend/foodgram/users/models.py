@@ -16,10 +16,14 @@ class User(AbstractUser):
         validators=[create_username_validator()]
     )
     first_name = models.CharField(
-        max_length=USERS_MAX_LENGTH
+        max_length=USERS_MAX_LENGTH,
+        blank=True,
+        null=True
     )
     last_name = models.CharField(
-        max_length=USERS_MAX_LENGTH
+        max_length=USERS_MAX_LENGTH,
+        blank=True,
+        null=True
     )
     password = models.CharField(
         max_length=USERS_MAX_LENGTH

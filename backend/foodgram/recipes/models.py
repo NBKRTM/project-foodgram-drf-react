@@ -11,6 +11,7 @@ class Tag(models.Model):
         'Название',
         max_length=RECIPES_MAX_LENGTH,
         unique=True,
+        db_index=True
     )
     color = models.CharField(
         'Цветовой HEX-код',
@@ -22,7 +23,7 @@ class Tag(models.Model):
         'Уникальный slug',
         max_length=RECIPES_MAX_LENGTH,
         unique=True,
-        validators=[create_slug_validator()]
+        validators=[create_slug_validator()],
     )
 
     class Meta:
@@ -50,7 +51,7 @@ class Ingredient(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -74,7 +75,6 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        through_fields=('recipe', 'ingredient'),
         verbose_name='Список ингредиентов',
         related_name='recipes',
     )
@@ -106,7 +106,7 @@ class RecipeIngredient(models.Model):
         Recipe,
         verbose_name='Название рецепта',
         on_delete=models.CASCADE,
-        related_name='recipe_ingredient'
+        related_name='ingredient_recipe'
     )
     ingredient = models.ForeignKey(
         Ingredient,
@@ -114,7 +114,7 @@ class RecipeIngredient(models.Model):
         related_name='ingredient_recipe',
         on_delete=models.CASCADE,
     )
-    amount = models.PositiveSmallIntegerField(
+    amount = models.PositiveIntegerField(
         verbose_name='Количество',
         validators=[MinValueValidator(1)],
     )
@@ -122,11 +122,10 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Состав рецепта'
         verbose_name_plural = 'Состав рецепта'
-        ordering = ('recipe',)
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
-                name='unique_ingredients'
+                name='unique_ingredient'
             )
         ]
 
@@ -135,12 +134,14 @@ class ShoppingCart(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='in_shopping_cart'
+        related_name='shopping_cart',
+        verbose_name='Рецепт',
     )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='user_shopping_cart'
+        related_name='shopping_cart',
+        verbose_name='Пользователь'
     )
 
     class Meta:
@@ -158,11 +159,13 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        verbose_name='Пользователь',
         related_name='in_favorited'
     )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        verbose_name='Рецепт',
         related_name='user_favorite'
     )
 
@@ -175,3 +178,6 @@ class Favorite(models.Model):
                 name='unique_favorite'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} добавил рецепт {self.recipe} в Избранное'

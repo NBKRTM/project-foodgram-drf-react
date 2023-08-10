@@ -30,7 +30,8 @@ services:
       - 8000:80
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/staticfiles
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static:/static/
       - media:/media/
     depends_on:
       - backend
