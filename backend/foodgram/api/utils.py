@@ -18,13 +18,15 @@ def create_recipe_ingredient(recipe, ingredients_data):
         amount = ingredient_data['amount']
         ingredient = Ingredient.objects.get(id=ingredient_id)
         existing_recipe_ingredient = RecipeIngredient.objects.filter(
-                recipe=recipe,
-                ingredient=ingredient_id)
+            recipe=recipe,
+            ingredient=ingredient_id)
         if existing_recipe_ingredient.exists():
             existing_recipe_ingredient.update(amount=F('amount') + amount)
         else:
             recipe_ingredient = RecipeIngredient(
-                recipe=recipe, ingredient=ingredient, amount=amount
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=amount
             )
             ingredients.append(recipe_ingredient)
     RecipeIngredient.objects.bulk_create(ingredients)

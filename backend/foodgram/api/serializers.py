@@ -32,7 +32,7 @@ class UserPostSerializer(UserCreateSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True
-        )
+    )
 
     class Meta:
         model = User
