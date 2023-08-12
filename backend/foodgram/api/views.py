@@ -24,6 +24,7 @@ from .serializers import (FollowSerializer, IngredientSerializer,
                           ChangePasswordSerializer,
                           FavoriteSerializer, ShoppingCartSerializer)
 from .filters import IngredientFilter, RecipeFilter
+from .pagination import LimitPageNumberPaginator
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -128,6 +129,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    pagination_class = LimitPageNumberPaginator
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     http_method_names = ['get', 'post', 'patch', 'create', 'delete']

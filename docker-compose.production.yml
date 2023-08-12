@@ -20,13 +20,11 @@ services:
       - media_production:/app/media/
   frontend:
     image: nbkrtm/foodgram_frontend
-    # env_file: .env
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static_volume_production:/frontend_static
   gateway:
     image: nbkrtm/foodgram_gateway
-    # env_file: .env
     volumes:
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static_volume_production:/static/
