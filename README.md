@@ -24,8 +24,8 @@
 - Склонировать репозиторий и перейти в него в командной строке:
 
 ```bash
-git https://github.com/NBKRTM/foodgram-project-react
-cd foodgram-project-react
+git https://github.com/NBKRTM/project-foodgram-drf-react
+cd project-foodgram-drf-react
 ```
 
 - Cоздать и активировать виртуальное окружение, установить зависимости:
